@@ -6,7 +6,7 @@ from astrbot.api import logger
 from astrbot.core.config.astrbot_config import AstrBotConfig
 
 
-@register("astrbot_plugin_custom_llm", "YourName", "自定义LLM调用插件", "1.0.0")
+@register("astrbot_plugin_custom_llm", "3812142974", "自定义LLM调用插件", "1.0.0")
 class CustomLLMPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
