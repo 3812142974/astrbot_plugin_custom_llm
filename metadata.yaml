@@ -2,5 +2,5 @@ name: astrbot_plugin_custom_llm
 display_name: 自定义LLM调用插件
 desc: 通过指定指令直接调用特定API平台的LLM模型，绕过默认模型
 version: v1.0.0
-author: YourName
-repo: https://github.com/yourusername/astrbot_plugin_custom_llm
+author: 3812142974
+repo: https://github.com/3812142974/astrbot_plugin_custom_llm
