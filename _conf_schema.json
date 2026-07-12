@@ -1,0 +1,26 @@
+{
+  "api_url": {
+    "description": "API 平台地址（以 /v1 结尾）",
+    "type": "string",
+    "default": "https://api.example.com/v1",
+    "hint": "例如: https://api.openai.com/v1 或 https://api.deepseek.com/v1"
+  },
+  "api_key": {
+    "description": "API Key",
+    "type": "string",
+    "default": "",
+    "hint": "你的 API 密钥"
+  },
+  "model_name": {
+    "description": "模型名称",
+    "type": "string",
+    "default": "gpt-3.5-turbo",
+    "hint": "要调用的模型名称，如 gpt-4、deepseek-chat 等"
+  },
+  "command_name": {
+    "description": "触发指令名称",
+    "type": "string",
+    "default": "ask",
+    "hint": "触发此插件的指令名称，如 ask、llm、chat 等"
+  }
+}
