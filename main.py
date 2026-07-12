@@ -45,18 +45,19 @@ class CustomLLMPlugin(Star):
         # 获取用户消息（去掉指令名部分）
         message_str = event.message_str.strip()
         
-        # 移除指令名，获取实际问题内容
-        # message_str 包含完整消息如 "/ask 你好"，需要去掉 "/ask "
+        # 兼容有无 '/' 前缀的情况
         if message_str.startswith("/"):
-            # 找到第一个空格后的内容
-            parts = message_str.split(" ", 1)
-            if len(parts) > 1:
-                user_question = parts[1].strip()
-            else:
-                yield event.plain_result("❌ 请输入要问的内容，例如：/ask 你好")
-                return
+            message_str = message_str[1:]  # 去掉开头的 '/'
+            
+        # 此时 message_str 格式应为 "ask 你的问题"
+        parts = message_str.split(" ", 1)
+        
+        # 确保第一部分是指令名，且后面有内容
+        if len(parts) > 1 and parts[0].lower() == command_name.lower():
+            user_question = parts[1].strip()
         else:
-            user_question = message_str
+            yield event.plain_result("❌ 请输入要问的内容，例如：/ask 你好")
+            return
 
         if not user_question:
             yield event.plain_result("❌ 请输入要问的内容，例如：/ask 你好")
