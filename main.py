@@ -5,7 +5,6 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from astrbot.core.config.astrbot_config import AstrBotConfig
 
-
 @register("astrbot_plugin_custom_llm", "3812142974", "自定义LLM调用插件", "1.0.0")
 class CustomLLMPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -19,17 +18,32 @@ class CustomLLMPlugin(Star):
         logger.info(f"模型名称: {self.config.get('model_name', '未配置')}")
         logger.info(f"触发指令: /{self.config.get('command_name', 'ask')}")
 
-    @filter.command("ask")
-    async def handle_ask(self, event: AstrMessageEvent):
+    # 【修改点1】：使用 on_message 拦截所有消息，以便动态读取配置中的指令名
+    @filter.on_message
+    async def handle_custom_llm(self, event: AstrMessageEvent):
         """
         自定义LLM调用指令
-        用法: /ask 你的问题内容
+        用法: /<指令名> 你的问题内容
         """
         # 获取配置
         api_url = self.config.get("api_url", "").strip()
         api_key = self.config.get("api_key", "").strip()
         model_name = self.config.get("model_name", "").strip()
         command_name = self.config.get("command_name", "ask").strip()
+
+        # 获取用户消息
+        message_str = event.message_str.strip()
+
+        # 【修改点2】：动态匹配指令名 (兼容带 / 和不带 / 的情况)
+        user_question = None
+        if message_str.startswith(f"/{command_name}"):
+            user_question = message_str[len(f"/{command_name}"):].strip()
+        elif message_str.startswith(command_name):
+            user_question = message_str[len(command_name):].strip()
+            
+        # 如果不是触发的指令，直接 return，不拦截消息，交给其他插件或默认大模型
+        if user_question is None:
+            return
 
         # 检查配置是否完整
         if not api_url:
@@ -42,32 +56,14 @@ class CustomLLMPlugin(Star):
             yield event.plain_result("❌ 错误：未配置模型名称，请在插件配置中填写")
             return
 
-        # 获取用户消息（去掉指令名部分）
-        message_str = event.message_str.strip()
-        
-        # 兼容有无 '/' 前缀的情况
-        if message_str.startswith("/"):
-            message_str = message_str[1:]  # 去掉开头的 '/'
-            
-        # 此时 message_str 格式应为 "ask 你的问题"
-        parts = message_str.split(" ", 1)
-        
-        # 确保第一部分是指令名，且后面有内容
-        if len(parts) > 1 and parts[0].lower() == command_name.lower():
-            user_question = parts[1].strip()
-        else:
-            yield event.plain_result("❌ 请输入要问的内容，例如：/ask 你好")
-            return
-
         if not user_question:
-            yield event.plain_result("❌ 请输入要问的内容，例如：/ask 你好")
+            yield event.plain_result(f"❌ 请输入要问的内容，例如：/{command_name} 你好")
             return
 
         # 发送提示消息
         yield event.plain_result(f"🤔 正在调用模型 {model_name} 处理你的问题...")
 
         # 构建 API 请求
-        # 确保 URL 以 /chat/completions 结尾
         base_url = api_url.rstrip("/")
         if base_url.endswith("/v1"):
             chat_url = f"{base_url}/chat/completions"
@@ -100,8 +96,6 @@ class CustomLLMPlugin(Star):
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        
-                        # 解析 OpenAI 兼容格式的响应
                         if "choices" in result and len(result["choices"]) > 0:
                             content = result["choices"][0]["message"]["content"]
                             yield event.plain_result(f"✅ 模型回复：\n\n{content}")
@@ -112,7 +106,6 @@ class CustomLLMPlugin(Star):
                         error_text = await response.text()
                         logger.error(f"API 请求失败，状态码: {response.status}, 响应: {error_text}")
                         yield event.plain_result(f"❌ API 请求失败，状态码: {response.status}\n错误信息: {error_text[:500]}")
-
         except aiohttp.ClientError as e:
             logger.error(f"网络请求错误: {e}")
             yield event.plain_result(f"❌ 网络请求错误: {str(e)}")
