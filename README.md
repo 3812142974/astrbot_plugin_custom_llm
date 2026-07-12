@@ -24,7 +24,7 @@
 如果你的 AstrBot 环境支持直接拉取 Git 仓库，可以在插件目录执行：
 ```bash
 cd data/plugins
-git clone https://github.com/你的用户名/astrbot_plugin_custom_llm.git
+git clone https://github.com/3812142974/astrbot_plugin_custom_llm.git
 ```
 
 ---
