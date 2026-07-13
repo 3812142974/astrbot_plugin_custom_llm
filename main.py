@@ -18,8 +18,8 @@ class CustomLLMPlugin(Star):
         logger.info(f"模型名称: {self.config.get('model_name', '未配置')}")
         logger.info(f"触发指令: /{self.config.get('command_name', 'ask')}")
 
-    # 【修改点1】：使用 on_message 拦截所有消息，以便动态读取配置中的指令名
-    @filter.on_message
+    # 【关键修改1】：使用官方推荐的 event_message_type 监听所有消息，以便动态读取配置中的指令名
+    @filter.event_message_type(filter.EventMessageType.ALL)
     async def handle_custom_llm(self, event: AstrMessageEvent):
         """
         自定义LLM调用指令
@@ -34,14 +34,14 @@ class CustomLLMPlugin(Star):
         # 获取用户消息
         message_str = event.message_str.strip()
 
-        # 【修改点2】：动态匹配指令名 (兼容带 / 和不带 / 的情况)
+        # 【关键修改2】：动态匹配指令名 (兼容带 / 和不带 / 的情况，NapCat 兼容)
         user_question = None
         if message_str.startswith(f"/{command_name}"):
             user_question = message_str[len(f"/{command_name}"):].strip()
         elif message_str.startswith(command_name):
             user_question = message_str[len(command_name):].strip()
             
-        # 如果不是触发的指令，直接 return，不拦截消息，交给其他插件或默认大模型
+        # 如果不是触发的指令，直接 return，不拦截消息，交给其他插件或默认大模型处理
         if user_question is None:
             return
 
